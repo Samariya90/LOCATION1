@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Field Visit Capture</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f3f3f3;
+padding:20px;
+}
+
+.container{
+max-width:500px;
+margin:auto;
+background:white;
+padding:20px;
+border-radius:10px;
+box-shadow:0 4px 10px rgba(0,0,0,0.2);
+}
+
+input,textarea,button{
+width:100%;
+padding:12px;
+margin-top:10px;
+font-size:16px;
+border-radius:6px;
+border:1px solid #ccc;
+}
+
+button{
+background:#0066ff;
+color:white;
+border:none;
+font-weight:bold;
+}
+
+video{
+width:100%;
+border-radius:10px;
+margin-top:10px;
+}
+
+#status{
+margin-top:10px;
+font-weight:bold;
+text-align:center;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Field Visit Form</h2>
+
+<form id="form">
+
+<input type="text" id="name" placeholder="Enter Name" required>
+
+<textarea id="details" placeholder="Other Details"></textarea>
+
+<video id="video" autoplay playsinline></video>
+
+<button type="button" id="capture">Capture Photo</button>
+
+<canvas id="canvas" style="display:none"></canvas>
+
+<button type="button" onclick="getLocation()">Capture Location</button>
+
+<button type="submit">Submit</button>
+
+<p id="status"></p>
+
+</form>
+
+</div>
+
+<script>
+
+const scriptURL="YOUR_SCRIPT_URL";
+
+const video=document.getElementById("video");
+const canvas=document.getElementById("canvas");
+
+let latitude="";
+let longitude="";
+let maplink="";
+let imageData="";
+
+
+// CAMERA START
+
+navigator.mediaDevices.getUserMedia({
+video:{facingMode:"environment"}
+})
+.then(stream=>{
+video.srcObject=stream;
+});
+
+
+// PHOTO CAPTURE
+
+document.getElementById("capture").onclick=function(){
+
+canvas.width=video.videoWidth;
+canvas.height=video.videoHeight;
+
+canvas.getContext("2d").drawImage(video,0,0);
+
+imageData=canvas.toDataURL("image/jpeg");
+
+document.getElementById("status").innerHTML="Photo Captured";
+
+};
+
+
+
+// LOCATION CAPTURE
+
+function getLocation(){
+
+navigator.geolocation.getCurrentPosition(function(pos){
+
+latitude=pos.coords.latitude;
+longitude=pos.coords.longitude;
+
+maplink="https://maps.google.com/?q="+latitude+","+longitude;
+
+document.getElementById("status").innerHTML="Location Captured";
+
+});
+
+}
+
+
+
+// DEVICE ID
+
+function getDeviceID(){
+
+let agent=navigator.userAgent;
+let platform=navigator.platform;
+let lang=navigator.language;
+
+return btoa(agent+platform+lang);
+
+}
+
+
+
+// FORM SUBMIT
+
+document.getElementById("form").addEventListener("submit",function(e){
+
+e.preventDefault();
+
+document.getElementById("status").innerHTML="Uploading...";
+
+fetch(scriptURL,{
+method:"POST",
+body:new URLSearchParams({
+
+name:document.getElementById("name").value,
+details:document.getElementById("details").value,
+latitude:latitude,
+longitude:longitude,
+maplink:maplink,
+device:getDeviceID(),
+image:imageData
+
+})
+
+})
+.then(res=>res.text())
+.then(data=>{
+
+document.getElementById("status").innerHTML="Submitted Successfully";
+
+})
+.catch(err=>{
+
+document.getElementById("status").innerHTML="Upload Failed";
+
+});
+
+});
+
+</script>
+
+</body>
+</html>
