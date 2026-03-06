@@ -114,8 +114,7 @@ canvas.height=video.videoHeight;
 
 canvas.getContext("2d").drawImage(video,0,0);
 
-imageData=canvas.toDataURL("image/jpeg");
-
+imageData=canvas.toDataURL("image/jpeg", 0.6);
 document.getElementById("status").innerHTML="Photo Captured";
 
 };
